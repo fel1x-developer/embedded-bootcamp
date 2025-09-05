@@ -101,7 +101,7 @@ int main(void)
   while (1)
   {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // SPI Mode 0,0 CPOL low
-    uint8_t transmit[3] = {1, (0b1001000),0}; // CH1
+    uint8_t transmit[3] = {1, (0b10010000),0}; // CH1
     uint8_t receive[3] = {0};
     HAL_SPI_TransmitReceive(&hspi1, transmit, receive, 3, 20); // Set timeout to 20ms (50Hz)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Pull high
