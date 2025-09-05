@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -64,6 +66,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,6 +90,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +100,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // SPI Mode 0,0 CPOL low
+    uint8_t transmit[3] = {1, (0b1001000),0}; // CH1
+    uint8_t receive[3] = {0};
+    HAL_SPI_TransmitReceive(&hspi1, transmit, receive, 3, 20); // Set timeout to 20ms (50Hz)
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Pull high
+
+	// B9 B8 ... B1 by bitwise AND for masking
+	uint16_t data = (receive[2]) | ((receive[1] & 0b11)<< 8); // null will stay 0
+
+	// Normalize 10bits (0b1111111111 == 1023)
+	// Counter period is set to 64000, so set it to 3200-6400 (5%-10% duty cycle)
+	float pwm = ((float)data)/1023 * 3200 + 3200;
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)pwm); // 16bit for timer channel
+
+
+	HAL_Delay(10); // At the docs' request
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +143,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +182,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +198,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
