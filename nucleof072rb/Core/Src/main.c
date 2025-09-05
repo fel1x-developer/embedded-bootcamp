@@ -111,8 +111,8 @@ int main(void)
 
 	// Normalize 10bits (0b1111111111 == 1023)
 	// Counter period is set to 64000, so set it to 3200-6400 (5%-10% duty cycle)
-	float pwm = ((float)data)/1023 * 3200 + 3200;
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)pwm); // 16bit for timer channel
+	uint16_t pwm = data / 1023 * 3200 + 3200;
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm); // 16bit for timer channel
 
 
 	HAL_Delay(10); // At the docs' request
